@@ -1,0 +1,383 @@
+<!doctype html>
+<!--
+  Dasbor KPI Tiket — polos HTML/CSS/JS.
+  Tidak perlu server, tidak perlu npm, tidak perlu internet.
+  Cara menjalankan: klik ganda file ini.
+-->
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Telkominfra — dasbor KPI tiket & penanganan alarm, analisis CSV/XLSX sepenuhnya di peramban." />
+  <title>Telkominfra — Dasbor KPI Tiket</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ===== Ikon (SVG sprite, dipakai lewat <use href="#...">) ===== -->
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></symbol>
+  <symbol id="i-sheet" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M8 13h2"/><path d="M14 13h2"/><path d="M8 17h2"/><path d="M14 17h2"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-timer" viewBox="0 0 24 24"><line x1="10" x2="14" y1="2" y2="2"/><line x1="12" x2="15" y1="14" y2="11"/><circle cx="12" cy="14" r="8"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><path d="M12 3v18"/><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/></symbol>
+  <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></symbol>
+  <symbol id="i-triangle" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+  <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3z"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></symbol>
+  <symbol id="i-map" viewBox="0 0 24 24"><polygon points="3 6 9 3 15 6 21 3 21 18 15 21 9 18 3 21"/><line x1="9" x2="9" y1="3" y2="18"/><line x1="15" x2="15" y1="6" y2="21"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></symbol>
+  <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></symbol>
+  <symbol id="i-inbox" viewBox="0 0 24 24"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+</svg>
+
+<!-- ===== Header ===== -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-mark">
+        <svg class="icon" viewBox="0 0 24 24" role="img" aria-label="Telkominfra">
+          <path d="M5 18v-5" stroke-linecap="round"/>
+          <path d="M12 18V7" stroke-linecap="round"/>
+          <path d="M19 18V3" stroke-linecap="round"/>
+          <path d="M3 21h18" stroke-linecap="round" opacity="0.55"/>
+        </svg>
+      </span>
+      <div>
+        <p class="brand-name">Telkom<span class="accent">infra</span></p>
+        <p class="brand-sub">Dasbor KPI tiket &amp; alarm</p>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <span class="pill pill-green"><svg class="icon icon-sm"><use href="#i-shield"/></svg> Lokal &amp; privat</span>
+      <span class="pill">CSV / XLSX analytics</span>
+    </div>
+  </div>
+</header><main class="wrap">
+
+  <!-- ===== Judul halaman ===== -->
+  <section class="page-head">
+    <div>
+      <p class="eyebrow"><svg class="icon icon-xs"><use href="#i-sparkles"/></svg> Operations analytics</p>
+      <h1>Dasbor Kinerja Tiket</h1>
+      <p class="lead">Pantau volume insiden, kecepatan penyelesaian, dan kepatuhan SLA dalam satu tampilan.</p>
+    </div>
+    <span class="pill pill-green" id="loaded-badge" hidden>
+      <svg class="icon icon-sm"><use href="#i-shield"/></svg> <span id="loaded-badge-text"></span>
+    </span>
+  </section>
+
+  <!-- ===== Area unggah ===== -->
+  <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Pilih atau seret beberapa file CSV atau XLSX">
+    <span class="dropzone-icon"><svg class="icon"><use href="#i-upload"/></svg></span>
+    <span class="dropzone-title" id="dz-title">Pilih atau seret satu atau beberapa file CSV/XLSX</span>
+    <span class="dropzone-hint" id="dz-hint">Beberapa bulan bisa digabung sekaligus · duplikat dibuang otomatis · data tidak diunggah ke server</span>
+    <span class="dropzone-bar" id="dz-progress" hidden><i></i></span>
+    <span class="btn-dark" id="dz-browse" hidden>Jelajahi file</span>
+  </div>
+
+  <div id="file-chip" class="file-chip" hidden>
+    <span class="file-chip-icon"><svg class="icon"><use href="#i-sheet"/></svg></span>
+    <div class="file-chip-text">
+      <p class="file-chip-name" id="file-name" title=""></p>
+      <p class="file-chip-meta" id="file-meta"></p>
+      <p class="file-chip-dedupe" id="file-dedupe" hidden></p>
+    </div>
+    <svg class="icon file-chip-ok"><use href="#i-check"/></svg>
+    <div class="file-chip-actions">
+      <button class="btn btn-primary" id="btn-add" type="button">
+        <svg class="icon icon-sm"><use href="#i-plus"/></svg> Tambah file
+      </button>
+      <button class="btn" id="btn-replace" type="button">Ganti semua file</button>
+      <button class="btn btn-icon" id="btn-clear" type="button" title="Hapus data" aria-label="Hapus data">
+        <svg class="icon icon-sm"><use href="#i-refresh"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <input type="file" id="file-input" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple hidden />
+
+  <div class="alert alert-error" id="alert-error" role="alert" hidden>
+    <svg class="icon icon-sm"><use href="#i-alert"/></svg><span id="alert-error-text"></span>
+  </div>
+  <div class="alert alert-warn" id="alert-filewarn" hidden>
+    <svg class="icon icon-sm"><use href="#i-triangle"/></svg><span id="alert-filewarn-text"></span>
+  </div>
+  <div class="alert alert-warn" id="alert-warn" hidden>
+    <svg class="icon icon-sm"><use href="#i-triangle"/></svg><span id="alert-warn-text"></span>
+  </div>
+  <div class="alert alert-warn" id="alert-schema" hidden>
+    <svg class="icon icon-sm"><use href="#i-info"/></svg><span id="alert-schema-text"></span>
+  </div>
+
+  <!-- ===== Layar awal (belum ada data) ===== -->
+  <section class="welcome" id="welcome">
+    <div class="welcome-inner">
+      <span class="welcome-icon"><svg class="icon"><use href="#i-upload"/></svg></span>
+      <h2>Mulai dengan file CSV atau XLSX Anda</h2>
+      <p>Unggah satu atau beberapa ekspor bulanan sekaligus untuk melihat tren, kepatuhan SLA, waktu penyelesaian, distribusi severity, dan banyak lagi. Semua pemrosesan berlangsung di peramban Anda.</p>
+      <button class="link-btn" id="btn-sample" type="button">Belum punya file? Muat contoh data demo</button>
+      <div class="feature-grid">
+        <div class="feature"><svg class="icon"><use href="#i-activity"/></svg><p class="feature-title">Analitik otomatis</p><p class="feature-text">Ringkasan KPI &amp; grafik dibuat dari kolom CSV.</p></div>
+        <div class="feature"><svg class="icon"><use href="#i-shield"/></svg><p class="feature-title">Privat &amp; lokal</p><p class="feature-text">File tidak dikirim ke server mana pun.</p></div>
+        <div class="feature"><svg class="icon"><use href="#i-sheet"/></svg><p class="feature-title">Data besar</p><p class="feature-text">Puluhan ribu baris tetap responsif.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Dasbor (muncul setelah ada data) ===== -->
+  <div id="dashboard" hidden>
+
+    <!-- Filter -->
+    <div class="card filterbar">
+      <span class="filter-label"><svg class="icon icon-sm"><use href="#i-calendar"/></svg> Rentang</span>
+      <label class="date-field">Dari <input type="date" id="f-from" aria-label="Tanggal mulai" /></label>
+      <label class="date-field">Sampai <input type="date" id="f-to" aria-label="Tanggal akhir" /></label>
+      <span class="divider" aria-hidden="true"></span>
+      <span class="filter-label filter-label-dur">Durasi (jam)</span>
+      <label class="duration-field" title="Batas bawah lama penyelesaian, inklusif. Kosong = tanpa batas.">
+        Dari <input type="number" id="f-duration-from" min="0" step="0.1" placeholder="0" aria-label="Durasi dari, dalam jam" />
+      </label>
+      <label class="duration-field" title="Batas atas lama penyelesaian, eksklusif (1–3 = dari 1 hingga kurang dari 3 jam). Kosong = tanpa batas.">
+        Sampai <input type="number" id="f-duration-to" min="0" step="0.1" placeholder="—" aria-label="Durasi sampai, dalam jam" />
+      </label>
+      <span class="filter-hint" id="f-duration-hint">Cleared Time − DateOccured · bawah inklusif, atas eksklusif</span>
+      <span class="divider" aria-hidden="true"></span>
+      <label class="select-wrap"><span class="sr-only">NOP</span><select id="f-nop"></select></label>
+      <label class="select-wrap"><span class="sr-only">Cluster</span><select id="f-cluster"></select></label>
+      <label class="select-wrap"><span class="sr-only">Severity</span><select id="f-severity"></select></label>
+      <label class="select-wrap"><span class="sr-only">Status</span><select id="f-status"></select></label>
+      <label class="select-wrap"><span class="sr-only">SLA</span><select id="f-sla"></select></label>
+      <div class="filter-right">
+        <span class="filter-count" id="f-count"></span>
+        <button class="btn" id="btn-reset" type="button" disabled>
+          <svg class="icon icon-sm"><use href="#i-filter"/></svg><span id="btn-reset-text">Reset</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- KPI -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-top"><p class="kpi-label">Total Tiket</p><span class="kpi-icon"><svg class="icon icon-sm"><use href="#i-sheet"/></svg></span></div>
+        <p class="kpi-value" id="kpi-total">—</p>
+        <p class="kpi-sub" id="kpi-total-sub"></p>
+        <p class="kpi-hint"><svg class="icon icon-xs"><use href="#i-info"/></svg> Seluruh baris yang cocok dengan filter</p>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top"><p class="kpi-label">Kepatuhan SLA</p><span class="kpi-icon"><svg class="icon icon-sm"><use href="#i-shield"/></svg></span></div>
+        <p class="kpi-value" id="kpi-sla">—</p>
+        <p class="kpi-sub" id="kpi-sla-sub"></p>
+        <p class="kpi-hint"><svg class="icon icon-xs"><use href="#i-info"/></svg> IN SLA ÷ (IN SLA + OUT SLA)</p>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top"><p class="kpi-label">MTTR Rata-rata</p><span class="kpi-icon"><svg class="icon icon-sm"><use href="#i-timer"/></svg></span></div>
+        <p class="kpi-value" id="kpi-mttr">—</p>
+        <p class="kpi-sub" id="kpi-mttr-sub"></p>
+        <p class="kpi-hint"><svg class="icon icon-xs"><use href="#i-info"/></svg> <span id="kpi-mttr-hint">Tiket CLOSED saja</span></p>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-top"><p class="kpi-label">Tiket Terbuka</p><span class="kpi-icon"><svg class="icon icon-sm"><use href="#i-clock"/></svg></span></div>
+        <p class="kpi-value" id="kpi-open">—</p>
+        <p class="kpi-sub" id="kpi-open-sub"></p>
+        <p class="kpi-hint"><svg class="icon icon-xs"><use href="#i-info"/></svg> Status selain CLOSED / RESOLVED</p>
+      </div>
+    </div>
+
+    <!-- Tren -->
+    <section class="card" data-card="trend">
+      <header class="card-head">
+        <div>
+          <h3>Tren Akar Masalah</h3>
+          <p class="card-sub" id="trend-sub">—</p>
+        </div>
+        <div class="card-actions">
+          <span class="badge" id="trend-badge"></span>
+          <div class="picker" id="picker-root">
+            <button class="btn" type="button" id="picker-btn" aria-haspopup="true" aria-expanded="false">
+              Akar masalah <span class="picker-count" id="picker-count">0/6</span>
+            </button>
+            <div class="picker-menu" id="picker-menu" hidden></div>
+          </div>
+          <button class="ghost-btn" type="button" data-toggle="trend">
+            <svg class="icon icon-sm"><use href="#i-table"/></svg><span>Lihat sebagai tabel</span>
+          </button>
+        </div>
+      </header>
+      <div class="card-body">
+        <div class="view view-chart" id="view-chart-trend">
+          <ul class="legend" id="legend-trend"></ul>
+          <div class="chart-host" id="chart-trend"></div>
+        </div>
+        <div class="view view-table" id="view-table-trend" hidden></div>
+      </div>
+    </section>
+
+    <!-- Status + SLA -->
+    <div class="grid-2">
+      <section class="card" data-card="status">
+        <header class="card-head">
+          <div><h3>Sebaran Status Tiket</h3><p class="card-sub">Perbandingan jumlah tiket per status</p></div>
+          <div class="card-actions">
+            <button class="ghost-btn" type="button" data-toggle="status">
+              <svg class="icon icon-sm"><use href="#i-table"/></svg><span>Lihat sebagai tabel</span>
+            </button>
+          </div>
+        </header>
+        <div class="card-body">
+          <div class="view view-chart" id="view-chart-status"><div class="chart-host" id="chart-status"></div></div>
+          <div class="view view-table" id="view-table-status" hidden></div>
+        </div>
+      </section>
+
+      <section class="card" data-card="sla">
+        <header class="card-head">
+          <div><h3>Kepatuhan SLA</h3><p class="card-sub">IN SLA dibanding OUT SLA</p></div>
+          <div class="card-actions">
+            <button class="ghost-btn" type="button" data-toggle="sla">
+              <svg class="icon icon-sm"><use href="#i-table"/></svg><span>Lihat sebagai tabel</span>
+            </button>
+          </div>
+        </header>
+        <div class="card-body">
+          <div class="view view-chart sla-layout" id="view-chart-sla">
+            <div class="chart-host donut-host" id="chart-sla"></div>
+            <ul class="legend" id="legend-sla"></ul>
+          </div>
+          <div class="view view-table" id="view-table-sla" hidden></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Severity + Akar masalah + Cluster -->
+    <div class="grid-3">
+      <section class="card" data-card="severity">
+        <header class="card-head">
+          <div><h3>Severity</h3><p class="card-sub">Kelas keparahan tiket</p></div>
+          <div class="card-actions">
+            <button class="ghost-btn" type="button" data-toggle="severity">
+              <svg class="icon icon-sm"><use href="#i-table"/></svg><span>Lihat sebagai tabel</span>
+            </button>
+          </div>
+        </header>
+        <div class="card-body">
+          <div class="view view-chart" id="view-chart-severity"><div class="chart-host" id="chart-severity"></div></div>
+          <div class="view view-table" id="view-table-severity" hidden></div>
+        </div>
+      </section>
+
+      <section class="card" data-card="root">
+        <header class="card-head">
+          <div><h3>Akar Masalah</h3><p class="card-sub">6 kategori teratas, sisanya digabung</p></div>
+          <div class="card-actions">
+            <button class="ghost-btn" type="button" data-toggle="root">
+              <svg class="icon icon-sm"><use href="#i-table"/></svg><span>Lihat sebagai tabel</span>
+            </button>
+          </div>
+        </header>
+        <div class="card-body">
+          <div class="view view-chart" id="view-chart-root"><div class="chart-host" id="chart-root"></div></div>
+          <div class="view view-table" id="view-table-root" hidden></div>
+        </div>
+      </section>
+
+      <section class="card" data-card="cluster">
+        <header class="card-head">
+          <div><h3>Tiket per Cluster</h3><p class="card-sub">8 cluster teratas, sisanya digabung</p></div>
+          <div class="card-actions">
+            <button class="ghost-btn" type="button" data-toggle="cluster">
+              <svg class="icon icon-sm"><use href="#i-table"/></svg><span>Lihat sebagai tabel</span>
+            </button>
+          </div>
+        </header>
+        <div class="card-body">
+          <div class="view view-chart" id="view-chart-cluster"><div class="chart-host" id="chart-cluster"></div></div>
+          <div class="view view-table" id="view-table-cluster" hidden></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- NOP -->
+    <section class="card" data-card="nop">
+      <header class="card-head">
+        <div><h3>Tiket per NOP</h3><p class="card-sub">Regional operations point</p></div>
+        <div class="card-actions">
+          <button class="ghost-btn" type="button" data-toggle="nop">
+            <svg class="icon icon-sm"><use href="#i-table"/></svg><span>Lihat sebagai tabel</span>
+          </button>
+        </div>
+      </header>
+      <div class="card-body">
+        <div class="view view-chart" id="view-chart-nop"><div class="chart-host" id="chart-nop"></div></div>
+        <div class="view view-table" id="view-table-nop" hidden></div>
+      </div>
+    </section>
+
+    <!-- Tabel data -->
+    <section class="card">
+      <header class="card-head">
+        <div><h3>Data Tiket</h3><p class="card-sub" id="table-sub">—</p></div>
+        <div class="card-actions">
+          <button class="btn" id="btn-export" type="button">
+            <svg class="icon icon-sm"><use href="#i-download"/></svg> Ekspor CSV tersaring
+          </button>
+        </div>
+      </header>
+      <div class="table-scroll">
+        <table class="data-table" id="data-table">
+          <thead>
+            <tr>
+              <th><button type="button" data-sort="date">Tanggal <span class="sort-ind">↕</span></button></th>
+              <th>No. WO</th><th>Site</th><th>NOP</th><th>Cluster</th><th>Status</th>
+              <th>Severity</th><th>SLA</th>
+              <th><button type="button" data-sort="mttr">MTTR (jam) <span class="sort-ind">↕</span></button></th>
+              <th>Akar Masalah</th><th>PIC</th><th>Remarks</th>
+            </tr>
+          </thead>
+          <tbody id="data-tbody"></tbody>
+        </table>
+        <div class="empty-state" id="table-empty" hidden>
+          <svg class="icon"><use href="#i-inbox"/></svg>
+          <p class="empty-title">Tidak ada baris yang cocok</p>
+          <p class="empty-hint">Longgarkan filter untuk melihat data kembali.</p>
+        </div>
+      </div>
+      <nav class="pager" id="pager" aria-label="Paginasi tabel">
+        <span class="pager-info" id="pager-info"></span>
+        <div class="pager-btns">
+          <button type="button" data-page="first" title="Halaman pertama" aria-label="Halaman pertama">«</button>
+          <button type="button" data-page="prev" title="Sebelumnya" aria-label="Sebelumnya">‹</button>
+          <button type="button" data-page="next" title="Berikutnya" aria-label="Berikutnya">›</button>
+          <button type="button" data-page="last" title="Halaman terakhir" aria-label="Halaman terakhir">»</button>
+        </div>
+      </nav>
+    </section>
+  </div>
+
+  <footer class="footer">
+    <p id="footer-year">© 2026 Telkominfra · Analitik berjalan sepenuhnya di sisi klien</p>
+    <p><svg class="icon icon-xs"><use href="#i-shield"/></svg> File CSV Anda tidak pernah meninggalkan perangkat ini</p>
+  </footer>
+</main>
+
+<!-- Tooltip bersama untuk semua grafik -->
+<div class="tooltip" id="tooltip" hidden></div>
+
+<!-- library parsing CSV (disimpan lokal, tanpa internet) -->
+<script src="papaparse.min.js"></script>
+<!-- pembaca workbook Excel (disimpan lokal, tanpa internet) -->
+<script src="xlsx.full.min.js"></script>
+<!-- logika dasbor -->
+<script src="app.js"></script>
+</body>
+</html>
