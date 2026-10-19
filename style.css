@@ -77,15 +77,19 @@ button:disabled { cursor: not-allowed; opacity: 0.4; }
   max-width: 1440px; margin: 0 auto; height: 56px;
   padding: 0 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
 }
-.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.brand-mark {
-  width: 32px; height: 32px; border-radius: 9px; flex: none;
-  background: #111827; color: #fff; display: grid; place-items: center;
+.brand { 
+  display: flex; 
+  align-items: center; 
+  gap: 12px; 
+  min-width: 0; 
 }
-.brand-name { margin: 0; font-size: 14px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
-.accent { color: var(--s1); }
-.brand-sub { margin: 0; font-size: 10.5px; color: var(--muted); line-height: 1.3; }
-.topbar-right { display: flex; align-items: center; gap: 8px; }
+.brand-logo {
+  height: 34px;
+  width: auto;
+  object-fit: contain;
+  flex: none;
+  display: block;
+}
 
 .pill {
   display: inline-flex; align-items: center; gap: 5px;
