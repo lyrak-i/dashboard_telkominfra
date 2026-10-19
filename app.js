@@ -1574,7 +1574,7 @@ NOP DEMO SELATAN;1;EM-20260914-00000030;WO-0030;SIT030;TOWER UTARA 6;CLOSED;14-0
    --------------------------------------------------------- */
 
 function init() {
-  $('footer-year').textContent = '© ' + new Date().getFullYear() + ' Telkominfra · Analitik berjalan sepenuhnya di sisi klien';
+  $('footer-year').textContent = '© ' + new Date().getFullYear() + ' Telkominfra';
 
   // --- unggah ---
   var input = $('file-input');
