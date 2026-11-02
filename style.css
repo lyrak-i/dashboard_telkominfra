@@ -79,8 +79,7 @@ button:disabled { cursor: not-allowed; opacity: 0.4; }
 }
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .brand-mark {
-  width: 32px; height: 32px; border-radius: 9px; flex: none;
-  background: #111827; color: #fff; display: grid; place-items: center;
+  background-image: url("images/telkom-infra.png");
 }
 .brand-name { margin: 0; font-size: 14px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
 .accent { color: var(--s1); }
