@@ -77,9 +77,18 @@ button:disabled { cursor: not-allowed; opacity: 0.4; }
   max-width: 1440px; margin: 0 auto; height: 56px;
   padding: 0 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
 }
-.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.brand-mark {
-  background-image: url("Telkom_Infra.png");
+.brand { 
+  display: flex; 
+  align-items: center; 
+  gap: 12px; 
+  min-width: 0; 
+}
+.brand-logo {
+  height: 34px;
+  width: auto;
+  object-fit: contain;
+  flex: none;
+  display: block;
 }
 .brand-name { margin: 0; font-size: 14px; font-weight: 700; letter-spacing: -0.01em; line-height: 1.2; }
 .accent { color: var(--s1); }
