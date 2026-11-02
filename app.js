@@ -1156,8 +1156,8 @@ function renderAll() {
     status: countBy(rows, schema.status),
     severity: sortSeverity(countBy(rows, schema.severity)),
     sla: slaCounts,
-    root: topN(countBy(rows, schema.rootcause, { mapLabel: 'Belum diisi' }), 6),
-    cluster: topN(countBy(rows, schema.cluster), 8),
+    root: countBy(rows, schema.rootcause, { mapLabel: 'Belum diisi' }),
+    cluster: countBy(rows, schema.cluster),
     nop: countBy(rows, schema.nop)
   };
 
@@ -1574,7 +1574,7 @@ NOP DEMO SELATAN;1;EM-20260914-00000030;WO-0030;SIT030;TOWER UTARA 6;CLOSED;14-0
    --------------------------------------------------------- */
 
 function init() {
-  $('footer-year').textContent = '© ' + new Date().getFullYear() + ' Telkominfra';
+  $('footer-year').textContent = '© ' + new Date().getFullYear() + ' Telkominfra · Analitik berjalan sepenuhnya di sisi klien';
 
   // --- unggah ---
   var input = $('file-input');
