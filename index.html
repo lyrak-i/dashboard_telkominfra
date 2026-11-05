@@ -40,7 +40,9 @@
 <header class="topbar">
   <div class="topbar-inner">
     <div class="brand">
-      <img class="brand-logo" src="Telkom_Infra.png" alt="Logo Telkom Infra" />
+      <span class="brand-mark">
+        <img class="brand-logo" src="Telkom_Infra.png" alt="Logo Telkom Infra" />
+      </span>
       <div>
         <p class="brand-sub">Dasbor KPI tiket &amp; alarm</p>
       </div>
@@ -131,12 +133,12 @@
       <label class="date-field">Dari <input type="date" id="f-from" aria-label="Tanggal mulai" /></label>
       <label class="date-field">Sampai <input type="date" id="f-to" aria-label="Tanggal akhir" /></label>
       <span class="divider" aria-hidden="true"></span>
-      <span class="filter-label filter-label-dur">Durasi (jam)</span>
+      <span class="filter-label filter-label-dur">MTTR (jam)</span>
       <label class="duration-field" title="Batas bawah lama penyelesaian, inklusif. Kosong = tanpa batas.">
-        Dari <input type="number" id="f-duration-from" min="0" step="0.1" placeholder="0" aria-label="Durasi dari, dalam jam" />
+        Dari <input type="number" id="f-duration-from" min="0" step="0.1" placeholder="0" aria-label="MTTR dari, dalam jam" />
       </label>
       <label class="duration-field" title="Batas atas lama penyelesaian, eksklusif (1–3 = dari 1 hingga kurang dari 3 jam). Kosong = tanpa batas.">
-        Sampai <input type="number" id="f-duration-to" min="0" step="0.1" placeholder="—" aria-label="Durasi sampai, dalam jam" />
+        Sampai <input type="number" id="f-duration-to" min="0" step="0.1" placeholder="—" aria-label="MTTR sampai, dalam jam" />
       </label>
       <span class="filter-hint" id="f-duration-hint">Cleared Time − DateOccured · bawah inklusif, atas eksklusif</span>
       <span class="divider" aria-hidden="true"></span>
@@ -145,6 +147,7 @@
       <label class="select-wrap"><span class="sr-only">Severity</span><select id="f-severity"></select></label>
       <label class="select-wrap"><span class="sr-only">Status</span><select id="f-status"></select></label>
       <label class="select-wrap"><span class="sr-only">SLA</span><select id="f-sla"></select></label>
+      <label class="select-wrap"><span class="sr-only">Is Checkin</span><select id="f-is-checkin"></select></label>
       <div class="filter-right">
         <span class="filter-count" id="f-count"></span>
         <button class="btn" id="btn-reset" type="button" disabled>
@@ -168,7 +171,7 @@
         <p class="kpi-hint"><svg class="icon icon-xs"><use href="#i-info"/></svg> IN SLA ÷ (IN SLA + OUT SLA)</p>
       </div>
       <div class="kpi-card">
-        <div class="kpi-top"><p class="kpi-label">Durasi Rata-rata</p><span class="kpi-icon"><svg class="icon icon-sm"><use href="#i-timer"/></svg></span></div>
+        <div class="kpi-top"><p class="kpi-label">MTTR Rata-rata</p><span class="kpi-icon"><svg class="icon icon-sm"><use href="#i-timer"/></svg></span></div>
         <p class="kpi-value" id="kpi-mttr">—</p>
         <p class="kpi-sub" id="kpi-mttr-sub"></p>
         <p class="kpi-hint"><svg class="icon icon-xs"><use href="#i-info"/></svg> <span id="kpi-mttr-hint">Tiket CLOSED saja</span></p>
@@ -185,14 +188,14 @@
     <section class="card" data-card="trend">
       <header class="card-head">
         <div>
-          <h3>Tren Akar Masalah</h3>
+          <h3>Tren Root Cause</h3>
           <p class="card-sub" id="trend-sub">—</p>
         </div>
         <div class="card-actions">
           <span class="badge" id="trend-badge"></span>
           <div class="picker" id="picker-root">
             <button class="btn" type="button" id="picker-btn" aria-haspopup="true" aria-expanded="false">
-              Akar masalah <span class="picker-count" id="picker-count">0/6</span>
+              Root Cause <span class="picker-count" id="picker-count">0/6</span>
             </button>
             <div class="picker-menu" id="picker-menu" hidden></div>
           </div>
@@ -246,7 +249,7 @@
       </section>
     </div>
 
-    <!-- Severity + Akar masalah + Cluster -->
+    <!-- Severity + Root Cause + Cluster -->
     <div class="grid-3">
       <section class="card" data-card="severity">
         <header class="card-head">
@@ -265,7 +268,7 @@
 
       <section class="card" data-card="root">
         <header class="card-head">
-          <div><h3>Akar Masalah</h3><p class="card-sub">6 kategori teratas, sisanya digabung</p></div>
+          <div><h3>Root Cause</h3><p class="card-sub">6 kategori teratas, sisanya digabung</p></div>
           <div class="card-actions">
             <button class="ghost-btn" type="button" data-toggle="root">
               <svg class="icon icon-sm"><use href="#i-table"/></svg><span>Lihat sebagai tabel</span>
@@ -325,10 +328,18 @@
           <thead>
             <tr>
               <th><button type="button" data-sort="date">Tanggal <span class="sort-ind">↕</span></button></th>
-              <th>No. WO</th><th>Site</th><th>NOP</th><th>Cluster</th><th>Status</th>
-              <th>Severity</th><th>SLA</th>
+              <th>INAP No</th> <!-- Ubah label menjadi INAP No -->
+              <th>Site</th>
+              <th>NOP</th>
+              <th>Cluster</th>
+              <th>Status</th>
+              <th>Severity</th>
+              <th>SLA</th>
+              <th>Is Checkin</th>
               <th><button type="button" data-sort="mttr">Durasi (jam) <span class="sort-ind">↕</span></button></th>
-              <th>Akar Masalah</th><th>PIC</th><th>Remarks</th>
+              <th>Root Cause</th>
+              <th>PIC</th>
+              <th>Remarks</th>
             </tr>
           </thead>
           <tbody id="data-tbody"></tbody>

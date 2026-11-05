@@ -62,7 +62,7 @@ var FIELD_ALIASES = {
   cluster: ['cluster'],
   severity: ['severity'],
   status: ['ticket status', 'status'],
-  sla: ['sla'],
+  sla: ['sla', 'IsInSLA'],
   date: ['dateoccured', 'date occurred', 'tanggal', 'date'],
   cleared: ['cleared time', 'cleared', 'waktu selesai', 'site cleared on'],
   mttr: ['mttr (hours)', 'mttr', 'mttr hours'],
@@ -71,6 +71,7 @@ var FIELD_ALIASES = {
   ticketType: ['ticket type', 'tipe tiket'],
   siteName: ['site name'],
   site: ['site'],
+  inap: ['inap no', 'no inap', 'inap'], // <-- Mendeteksi kolom "INAP No"
   wo: ['wo ticket no', 'wo no'],
   pic: ['pic name', 'pic'],
   remarks: ['remarks'],
@@ -333,7 +334,7 @@ function finalizeData(rows, headers, files, dedupe, errors) {
    3. Filter
    --------------------------------------------------------- */
 
-var INITIAL_FILTERS = { nop: '', cluster: '', severity: '', status: '', sla: '', from: '', to: '', durationFrom: '', durationTo: '' };
+var INITIAL_FILTERS = { nop: '', cluster: '', severity: '', status: '', sla: '', isCheckin: '', from: '', to: '', durationFrom: '', durationTo: '' };
 var OPEN_STATUSES = { CLOSED: 1, RESOLVED: 1, SELESAI: 1, CLOSE: 1, 'CLOSE DONE': 1 };
 
 function val(row, col) { return col ? String(row[col] == null ? '' : row[col]).trim() : ''; }
@@ -366,19 +367,29 @@ function boundTs(chosen, rows, isEnd) {
   return best === Infinity ? null : best;
 }
 
-function applyFilters(rows, schema, filters) {
+function applyFilters(rows, schema, filters, selectedRootCauses) {
   var fromTs = boundTs(filters.from, rows, false);
   var toTs = boundTs(filters.to, rows, true);
   var hasDateWindow = fromTs != null || toTs != null;
   var fromDuration = filters.durationFrom === '' || filters.durationFrom == null ? null : Number(filters.durationFrom);
   var toDuration = filters.durationTo === '' || filters.durationTo == null ? null : Number(filters.durationTo);
   var hasDurationWindow = fromDuration != null || toDuration != null;
+  var checkRoots = Array.isArray(selectedRootCauses) && selectedRootCauses.length > 0;
+
   return rows.filter(function (r) {
     if (filters.nop && val(r, schema.nop) !== filters.nop) return false;
     if (filters.cluster && val(r, schema.cluster) !== filters.cluster) return false;
     if (filters.severity && val(r, schema.severity) !== filters.severity) return false;
     if (filters.status && val(r, schema.status) !== filters.status) return false;
     if (filters.sla && val(r, schema.sla) !== filters.sla) return false;
+    if (filters.isCheckin && val(r, schema.isCheckin) !== filters.isCheckin) return false;
+    
+    // Filter mengikuti kategori Tren Root Cause yang dipilih
+    if (checkRoots) {
+      var rootVal = val(r, schema.rootcause) || LABEL_EMPTY;
+      if (selectedRootCauses.indexOf(rootVal) === -1) return false;
+    }
+
     if (hasDateWindow) {
       if (r.__ts == null) return false;
       if (fromTs != null && r.__ts < fromTs) return false;
@@ -939,7 +950,8 @@ function populateFilters() {
     { id: 'f-cluster', key: 'cluster', col: schema.cluster, all: 'Semua Cluster' },
     { id: 'f-severity', key: 'severity', col: schema.severity, all: 'Semua Severity', ordered: true },
     { id: 'f-status', key: 'status', col: schema.status, all: 'Semua Status' },
-    { id: 'f-sla', key: 'sla', col: schema.sla, all: 'Semua SLA' }
+    { id: 'f-sla', key: 'sla', col: schema.sla, all: 'Semua SLA' },
+    { id: 'f-is-checkin', key: 'isCheckin', col: schema.isCheckin, all: 'Semua Visit' }
   ];
   defs.forEach(function (def) {
     var sel = $(def.id);
@@ -1017,17 +1029,17 @@ function renderCharts() {
   var a = state.aggregates;
   if (!a.trend) return;
 
-  // Pertahankan pilihan kategori yang masih tersedia; jika kosong, pilih 3 teratas.
-  var available = a.trend.categories.map(function (d) { return d.name; });
+  // Pertahankan pilihan kategori yang masih tersedia; jika kosong, pilih 3 teratas
+  var available = (a.allCategories || []).map(function (d) { return d.name; });
   var retained = state.rootTrendCategories.filter(function (name) { return available.indexOf(name) !== -1; });
   if (!retained.length && available.length) {
-    // Default memakai kategori berisi saja supaya perbandingan antar akar masalah
-    // tidak tertutup satu kategori "Belum diisi" yang biasanya sangat besar.
     var filled = available.filter(function (name) { return name !== LABEL_EMPTY; });
     retained = (filled.length ? filled : available).slice(0, Math.min(3, MAX_ROOT_TREND_SERIES));
   }
   state.rootTrendCategories = retained.slice(0, MAX_ROOT_TREND_SERIES);
-  renderRootTrendPicker(a.trend.categories);
+  
+  // Render dropdown picker berdasarkan semua kategori yang tersedia
+  renderRootTrendPicker(a.allCategories || a.trend.categories);
 
   var selected = state.rootTrendCategories.slice();
   var tableHtml = rootTrendTableHtml(a.trend.data, selected);
@@ -1040,7 +1052,7 @@ function renderCharts() {
     barChart(a.status, $('chart-status').clientWidth || 480, 250),
     miniTableHtml(a.status, 'Status', 'Jumlah Tiket'));
 
-  // Donat memakai HTML terpisah untuk legend-nya.
+  // Donat SLA
   var slaRes = donutChart(a.sla, a.kpis.slaPct == null ? '—' : fmtPct(a.kpis.slaPct), 'kepatuhan');
   if (typeof slaRes === 'string') {
     renderChartCard('sla', slaRes, miniTableHtml(a.sla, 'SLA', 'Jumlah Tiket', 'Kolom SLA tidak ditemukan pada file ini.'));
@@ -1072,7 +1084,6 @@ function renderCharts() {
     barChart(a.nop, $('chart-nop').clientWidth || 560, 220),
     miniTableHtml(a.nop, 'NOP', 'Jumlah Tiket'));
 
-  // Kartu NOP disembunyikan bila kolomnya tidak ada.
   var nopCard = document.querySelector('[data-card="nop"]');
   if (nopCard) nopCard.hidden = a.nop.length === 0;
 
@@ -1111,7 +1122,8 @@ function renderRootTrendPicker(categories) {
       } else {
         state.rootTrendCategories = state.rootTrendCategories.filter(function (item) { return item !== name; });
       }
-      renderCharts();
+      state.page = 0;
+      renderAll(); // <-- Me-render ulang semua grafik, KPI, dan tabel
     });
   });
 }
@@ -1142,27 +1154,46 @@ function renderRootTrendLegend(categories) {
 function renderAll() {
   if (!state.data) return;
 
-  var rows = applyFilters(state.data.rows, state.data.schema, state.filters);
-  state.filtered = rows;
-
-  var k = computeKpis(rows, state.data.schema);
   var schema = state.data.schema;
 
-  var slaCounts = countBy(rows, schema.sla).filter(function (d) { return d.name === 'IN SLA' || d.name === 'OUT SLA'; });
+  // 1. Dapatkan baris dasar (hanya filter atas: NOP, cluster, tanggal, durasi, dll.)
+  var baseRows = applyFilters(state.data.rows, schema, state.filters, null);
+
+  // Simpan daftar seluruh kategori akar masalah yang ada untuk menu pilihan (picker)
+  var initialTrend = buildRootTrend(baseRows, schema);
+  var available = initialTrend.categories.map(function (d) { return d.name; });
+
+  // Tentukan kategori akar masalah yang aktif
+  var retained = state.rootTrendCategories.filter(function (name) { return available.indexOf(name) !== -1; });
+  if (!retained.length && available.length) {
+    var filled = available.filter(function (name) { return name !== LABEL_EMPTY; });
+    retained = (filled.length ? filled : available).slice(0, Math.min(3, MAX_ROOT_TREND_SERIES));
+  }
+  state.rootTrendCategories = retained.slice(0, MAX_ROOT_TREND_SERIES);
+
+  // 2. Terapkan filter kategori akar masalah tren ke seluruh dataset aktif
+  var filteredRows = applyFilters(baseRows, schema, {}, state.rootTrendCategories);
+  state.filtered = filteredRows;
+
+  // 3. Hitung KPI dan Agregasi grafik menggunakan baris yang sudah terfilter tren akar masalah
+  var k = computeKpis(filteredRows, schema);
+  var slaCounts = countBy(filteredRows, schema.sla).filter(function (d) { return d.name === 'IN SLA' || d.name === 'OUT SLA'; });
 
   state.aggregates = {
     kpis: k,
-    trend: buildRootTrend(rows, schema),
-    status: countBy(rows, schema.status),
-    severity: sortSeverity(countBy(rows, schema.severity)),
+    allCategories: initialTrend.categories, // disimpan agar picker opsi tetap lengkap
+    trend: buildRootTrend(filteredRows, schema),
+    status: countBy(filteredRows, schema.status),
+    severity: sortSeverity(countBy(filteredRows, schema.severity)),
     sla: slaCounts,
-    root: countBy(rows, schema.rootcause, { mapLabel: 'Belum diisi' }),
-    cluster: countBy(rows, schema.cluster),
-    nop: countBy(rows, schema.nop)
+    root: countBy(filteredRows, schema.rootcause, { mapLabel: 'Belum diisi' }),
+    cluster: countBy(filteredRows, schema.cluster),
+    nop: countBy(filteredRows, schema.nop)
   };
 
-  state.page = Math.min(state.page, Math.max(0, Math.ceil(rows.length / PAGE_SIZE) - 1));
+  state.page = Math.min(state.page, Math.max(0, Math.ceil(filteredRows.length / PAGE_SIZE) - 1));
 
+  // 4. Render ulang seluruh komponen
   renderKpis(k);
   renderCharts();
   renderTable();
@@ -1182,13 +1213,14 @@ function updateFilterBar() {
 
 var TABLE_COLS = [
   { key: 'date', label: 'Tanggal', sortable: true, render: function (r) { return r.date ? fmtDate(r.date) : '—'; }, cls: 'num' },
-  { key: 'wo', label: 'No. WO', render: function (r) { return r.wo || '—'; } },
+  { key: 'inap', label: 'INAP No', render: function (r) { return r.inap || '—'; } }, // <-- Render data INAP No
   { key: 'siteName', label: 'Site', render: function (r) { return r.siteName || '—'; } },
   { key: 'nop', label: 'NOP', render: function (r) { return r.nop || '—'; } },
   { key: 'cluster', label: 'Cluster', render: function (r) { return r.cluster || '—'; } },
   { key: 'status', label: 'Status', render: function (r) { return r.status || '—'; }, cls: 'st' },
   { key: 'severity', label: 'Severity', render: function (r) { return r.severity || '—'; } },
   { key: 'sla', label: 'SLA', render: function (r) { return r.sla || '—'; } },
+  { key: 'isCheckin', label: 'Is Checkin', render: function (r) { return r.isCheckin || '—'; } },
   { key: 'mttr', label: 'MTTR (jam)', sortable: true, render: function (r) { return r.mttr == null ? '—' : fmtNum2(r.mttr); }, cls: 'num' },
   { key: 'rootcause1', label: 'Akar Masalah', render: function (r) { return r.rootcause1 || '—'; } },
   { key: 'pic', label: 'PIC', render: function (r) { return r.pic || '—'; } },
@@ -1211,9 +1243,20 @@ function statusTone(v) {
 function tableRow(row, schema) {
   var c = function (k) { return schema[k] ? (row[schema[k]] == null ? '' : row[schema[k]]) : null; };
   return {
-    date: row.__ts, wo: c('wo'), siteName: c('siteName'), nop: c('nop'), cluster: c('cluster'),
-    status: c('status'), severity: c('severity'), sla: c('sla'), mttr: row.__mttr,
-    rootcause1: c('rootcause1'), pic: c('pic'), remarks: c('remarks'), raw: row
+    date: row.__ts,
+    inap: c('inap') || c('wo'), // Mengambil kolom INAP No (fallback ke WO jika kosong)
+    siteName: c('siteName'),
+    nop: c('nop'),
+    cluster: c('cluster'),
+    status: c('status'),
+    severity: c('severity'),
+    sla: c('sla'),
+    isCheckin: c('isCheckin'),
+    mttr: row.__mttr,
+    rootcause1: c('rootcause1'),
+    pic: c('pic'),
+    remarks: c('remarks'),
+    raw: row
   };
 }
 
@@ -1224,9 +1267,14 @@ function renderTable() {
   var page = Math.min(state.page, totalPages - 1);
   state.page = page;
 
+  // Keterangan filter aktif dari tren root cause
+  var activeRootsText = state.rootTrendCategories && state.rootTrendCategories.length
+    ? ' (Tren Root Cause: ' + state.rootTrendCategories.join(', ') + ')'
+    : '';
+
   $('table-sub').textContent = rows.length
-    ? fmtInt(rows.length) + ' baris cocok dengan filter · menampilkan ' + fmtInt(Math.min(PAGE_SIZE, rows.length)) + ' baris per halaman'
-    : 'Tidak ada baris yang cocok dengan filter.';
+    ? fmtInt(rows.length) + ' baris cocok dengan filter' + activeRootsText + ' · menampilkan ' + fmtInt(Math.min(PAGE_SIZE, rows.length)) + ' baris per halaman'
+    : 'Tidak ada baris yang cocok dengan filter' + activeRootsText + '.';
 
   var tbody = $('data-tbody');
   var emptyEl = $('table-empty');
@@ -1244,7 +1292,7 @@ function renderTable() {
   emptyEl.hidden = true;
   pagerEl.hidden = false;
 
-  // urut: tanggal / MTTR saja (yang lain tetap urutan file)
+  // Urut: tanggal / MTTR saja (yang lain tetap urutan file)
   var idx = rows.map(function (_, i) { return i; });
   if (state.sort.key === 'date') {
     idx.sort(function (a, b) {
@@ -1285,7 +1333,7 @@ function renderTable() {
           : false;
   });
 
-  // indikator urutan di kepala kolom
+  // Indikator urutan di kepala kolom
   document.querySelectorAll('#data-table th').forEach(function (th) { th.removeAttribute('aria-sort'); });
   document.querySelectorAll('#data-table th button[data-sort]').forEach(function (b) {
     if (b.getAttribute('data-sort') === state.sort.key) {
@@ -1646,7 +1694,7 @@ function init() {
   // --- filter ---
   var filterDefs = [
     ['f-nop', 'nop'], ['f-cluster', 'cluster'], ['f-severity', 'severity'],
-    ['f-status', 'status'], ['f-sla', 'sla']
+    ['f-status', 'status'], ['f-sla', 'sla'], ['f-is-checkin', 'isCheckin'] // <-- Tambahan
   ];
   filterDefs.forEach(function (def) {
     $(def[0]).addEventListener('change', function (e) {
@@ -1722,10 +1770,12 @@ function init() {
 
   $('btn-reset').addEventListener('click', function () {
     state.filters = Object.assign({}, INITIAL_FILTERS);
-    ['f-nop', 'f-cluster', 'f-severity', 'f-status', 'f-sla'].forEach(function (id) {
+    ['f-nop', 'f-cluster', 'f-severity', 'f-status', 'f-sla', 'f-is-checkin'].forEach(function (id) { // <-- Ditambahkan
       var el = $(id);
-      el.value = '';
-      el.classList.remove('is-set');
+      if (el) {
+        el.value = '';
+        el.classList.remove('is-set');
+      }
     });
     $('f-from').value = '';
     $('f-to').value = '';
